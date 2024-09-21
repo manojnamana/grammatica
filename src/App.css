@@ -1,0 +1,34 @@
+.App {
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+}
+
+h1 {
+  margin: 20px;
+}
+
+.circle {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+  flex-wrap: wrap;
+}
+
+.chord-button {
+  background-color: #f1f1f1;
+  border: 2px solid #ccc;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chord-button:hover {
+  background-color: #ddd;
+}
+
+.chord-button:active {
+  background-color: #bbb;
+}
