@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as Tone from 'tone';
 import './App.css';
 
 const circleColors = [
-  '#FE462A',  // Red
+  '#ce2525',  // Red
   '#FD5F32',  // Orange
   '#F9D96A',  // Yellow
   '#1D6C3F',  // Green
@@ -15,7 +15,7 @@ const circleColors = [
 const chordCircles = [
 
   {
-    name: 'C Major Scale',
+    name: '1 Major Scale',
     chords: [
       { name: 'C', notes: ['C4', 'E4', 'G4'] },
       { name: 'G', notes: ['G4', 'B4', 'D5'] },
@@ -34,7 +34,7 @@ const chordCircles = [
   },
 
   {
-    name: 'G Major Scale',
+    name: '2 Major Scale',
     chords: [
       { name: 'Dm', notes: ['D4', 'F4', 'A4'] },
       { name: 'Am', notes: ['A4', 'C5', 'E5'] },
@@ -52,7 +52,7 @@ const chordCircles = [
   },
 
   {
-    name: 'D Major Scale',
+    name: '3 Major Scale',
     chords: [
       { name: 'Em', notes: ['E4', 'G4', 'B4'] },
       { name: 'Bm', notes: ['B4', 'D5', 'F#5'] },
@@ -70,7 +70,7 @@ const chordCircles = [
   },
   
   {
-    name: 'A Major Scale',
+    name: '4 Major Scale',
     chords: [
       { name: 'F', notes: ['F4', 'A4', 'C5'] },
       { name: 'C', notes: ['C5', 'E5', 'G5'] },
@@ -90,7 +90,7 @@ const chordCircles = [
   },
 
   {
-    name: 'E Major Scale',
+    name: '5 Major Scale',
     chords: [
       { name: 'G', notes: ['G4', 'B4', 'D5'] },
       { name: 'D', notes: ['D5', 'F#5', 'A5'] },
@@ -108,7 +108,7 @@ const chordCircles = [
   },
 
   {
-    name: 'B Major Scale',
+    name: '6 Major Scale',
     chords: [
       { name: 'Am', notes: ['A4', 'C5', 'E5'] },
       { name: 'Em', notes: ['E5', 'G5', 'B5'] },
@@ -127,7 +127,7 @@ const chordCircles = [
   },
 
   {
-    name: 'F# Major Scale',
+    name: '7 Major Scale',
     chords: [
       { name: 'Bdim', notes: ['B4', 'D5', 'F5'] },
       { name: 'F#dim', notes: ['F#5', 'A5', 'C6'] },
@@ -147,6 +147,7 @@ const chordCircles = [
 
   
 ];
+
 
 
 const playChord = (notes) => {
@@ -177,26 +178,25 @@ const getLabelPosition = (angle, radius) => {
 };
 
 function App() {
-  const outerRadius = 227;
-  const innerRadiusStep = 28; // Distance between each circle
-  const numSegments = 12;      // Fixed number of segments per circle
+  const [label, setShowLabel] = useState(false);
+  const [clickedSegment, setClickedSegment] = useState(null); // Track the clicked segment
+
+  const outerRadius = 250;
+  const innerRadiusStep = 30;
+  const numSegments = 12;
   const anglePerSegment = (2 * Math.PI) / numSegments;
 
   return (
-    <div className="App">
-      <h1 style={{textAlign:'center'}}>Grammatic Piano</h1>
-      <svg style={{ maxHeight: 500, maxWidth: 500 }} viewBox="-300 -300 600 600">
-        {/* Central Circle in the middle of the SVG */}
-        <circle cx="0" cy="0" r="30" fill="white" stroke="black" />
-
+    <div className="text-center flex-col flex justify-center items-center">
+      <h1 className='text-center text-black font-bold text-lg'>Grammatic Piano</h1>
+      <svg style={{ maxHeight: 500, maxWidth: 500}} viewBox="-300 -300 600 600">
         {chordCircles.map((circle, circleIndex) => {
           const innerRadius = outerRadius - (innerRadiusStep * (circleIndex + 1));
           const outerRadiusForCircle = outerRadius - (innerRadiusStep * circleIndex);
-          const circleColor = circleColors[circleIndex % circleColors.length]; // Use one color for each circle
+          const circleColor = circleColors[circleIndex % circleColors.length];
 
           return (
             <g key={circleIndex}>
-              {/* Draw a central circle for each concentric circle */}
               <circle
                 cx="0"
                 cy="0"
@@ -209,31 +209,33 @@ function App() {
                 const startAngle = index * anglePerSegment - Math.PI / 2;
                 const endAngle = (index + 1) * anglePerSegment - Math.PI / 2;
                 const midAngle = (startAngle + endAngle) / 2;
-
-                // Get label position
                 const labelPos = getLabelPosition(midAngle, (innerRadius + outerRadiusForCircle) / 2);
+
+                const isClicked = clickedSegment?.circleIndex === circleIndex && clickedSegment?.chordIndex === index;
 
                 return (
                   <g key={`${circleIndex}-${index}`}>
-                    {/* Pie slice (chord segment) */}
                     <path
                       d={getPathForArc(startAngle, endAngle, innerRadius, outerRadiusForCircle)}
-                      fill={circleColor}  // Apply the circle color to all segments in this circle
+                      fill={isClicked ? "white" : circleColor} // Set white if clicked, else original color
                       stroke="black"
-                      onClick={() => playChord(chord.notes)}
+                      onClick={() => {
+                        playChord(chord.notes);
+                        setClickedSegment({ circleIndex, chordIndex: index }); // Set clicked segment
+                      }}
                     />
-                    {/* Chord label */}
-                    <text
-                      x={labelPos.x}
-                      y={labelPos.y}
-                      fill="black"
-                      fontSize="12"
-                      textAnchor="middle"
-                      alignmentBaseline="middle"
-                      className="chord-label"
-                    >
-                      {chord.name}
-                    </text>
+                    {label && (
+                      <text
+                        x={labelPos.x}
+                        y={labelPos.y}
+                        fill="black"
+                        fontSize="12"
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                      >
+                        {chord.name}
+                      </text>
+                    )}
                   </g>
                 );
               })}
@@ -241,6 +243,14 @@ function App() {
           );
         })}
       </svg>
+
+      <div style={{position: "fixed", bottom: 0}} className='bg-sky-500 w-full p-2'>
+        {label ? (
+          <button className='bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white' onClick={() => setShowLabel(false)}>Hide labels</button>
+        ) : (
+          <button className='bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white' onClick={() => setShowLabel(true)}>Show labels</button>
+        )}
+      </div>
     </div>
   );
 }
