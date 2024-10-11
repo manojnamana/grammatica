@@ -240,13 +240,11 @@ function App() {
 
   const handleChordClick = (chord, circleIndex, chordIndex) => {
     playChord(chord.notes);
-    
     setClickedChordNotes(chord.notes);
     setClickedSegment({ circleIndex, chordIndex });
     setIsChordClicked(true);
     setActiveChord(chord.name); // Set the active chord name
     setHighlightedKeys(chord.notes.map(note => MidiNumbers.fromNote(note))); // Highlight keys
-  
   };
 
   return (

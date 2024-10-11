@@ -34,3 +34,39 @@ h1 {
 .chord-button:active {
   background-color: #bbb;
 }
+
+.piano-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  padding: 10px;
+}
+
+.piano-key {
+  width: 40px;
+  height: 150px;
+  margin: 2px;
+  background-color: white;
+  border: 1px solid black;
+  text-align: center;
+  line-height: 150px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.piano-key.selected {
+  background-color: yellow;
+}
+
+.piano-key:hover {
+  background-color: lightgray;
+}
+
+@media (max-width: 600px) {
+  .piano-key {
+    width: 30px;
+    height: 100px;
+    line-height: 100px;
+  }
+}

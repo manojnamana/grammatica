@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Soundfont from 'soundfont-player';
 import './App.css';
-import 'react-piano/dist/styles.css';
-import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 
 const circleColors = [
   '#ce2525',  // Red
@@ -150,20 +148,15 @@ const chordCircles = [
   
 ];
 
-// Function to load and play a chord using SoundFont player with adjustable volume
 
-const stopNote = async (midiNumber) => {
-  const note = MidiNumbers.getAttributes(midiNumber).note;
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const piano = await Soundfont.instrument(audioContext, 'acoustic_grand_piano');
-  piano.stop(note, audioContext.currentTime);
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Function to play a chord using soundfont-player
+const playChord = async (notes) => {
+  const player = await Soundfont.instrument(audioContext, 'acoustic_grand_piano');
+  player.play(...notes, 0, { duration: 2 });
 };
 
-
-const loadPiano = async () => {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  return Soundfont.instrument(audioContext, 'acoustic_grand_piano');
-};
 // Function to get SVG path for each pie slice (chord segment)
 const getPathForArc = (startAngle, endAngle, innerRadius, outerRadius) => {
   const x1 = outerRadius * Math.cos(startAngle);
@@ -186,78 +179,22 @@ const getLabelPosition = (angle, radius) => {
   return { x, y };
 };
 
-
-
 function App() {
-  const [piano, setPiano] = useState(null);
   const [label, setShowLabel] = useState(false);
-  const [showPiano, setShowPiano] = useState(false);
-  const [isChordClicked, setIsChordClicked] = useState(false); // To 
-  // const [soundProduced, setSoundProduced] = useState(true);
-  const [clickedChordNotes, setClickedChordNotes] = useState([]); // Track clicked chord notes
-  const [clickedSegment, setClickedSegment] = useState(null); // Track clicked segment
-  const [activeChord, setActiveChord] = useState(null); // Track active chord for name display
-  const [highlightedKeys, setHighlightedKeys] = useState([]); // Highlight piano keys
+  const [clickedSegment, setClickedSegment] = useState(null);
 
-  useEffect(() => {
-    // Preload piano sound when the component is mounted
-    loadPiano().then(setPiano);
-  }, []);
-
-  const playChord = (notes) => {
-    if (piano) {
-      piano.play(...notes, 0, { gain: 10, duration: 1 });
-    }
-  };
-
-  const playNote = (midiNumber) => {
-    if (piano) {
-      const note = MidiNumbers.getAttributes(midiNumber).note;
-      piano.play(note, 0, { gain: 10, duration: 1 });
-    }
-  };
-
-  const stopNote = (midiNumber) => {
-    if (piano) {
-      const note = MidiNumbers.getAttributes(midiNumber).note;
-      piano.stop(note, 0);
-    }
-  };
-  
   const outerRadius = 250;
   const innerRadiusStep = 30;
   const numSegments = 12;
   const anglePerSegment = (2 * Math.PI) / numSegments;
 
-  // Define the range for the piano
-  const firstNote = MidiNumbers.fromNote('C4');
-  const lastNote = MidiNumbers.fromNote('C6');
-  const keyboardShortcuts = KeyboardShortcuts.create({
-    firstNote,
-    lastNote,
-    keyboardConfig: KeyboardShortcuts.HOME_ROW,
-  });
-
-  const handleChordClick = (chord, circleIndex, chordIndex) => {
-    playChord(chord.notes);
-    
-    setClickedChordNotes(chord.notes);
-    setClickedSegment({ circleIndex, chordIndex });
-    setIsChordClicked(true);
-    setActiveChord(chord.name); // Set the active chord name
-    setHighlightedKeys(chord.notes.map(note => MidiNumbers.fromNote(note))); // Highlight keys
-  
-  };
-
   return (
     <div className="text-center flex-col flex justify-center items-center">
-      <h1 className="text-center text-black font-bold text-lg">Grammatic Piano</h1>
-
-      {/* Circle with Chords */}
-      <svg style={{ maxHeight: 400, maxWidth: 500 }} viewBox="-300 -300 600 600">
+      <h1 className='text-center text-black font-bold text-lg'>Grammatic Piano</h1>
+      <svg style={{ maxHeight: 500, maxWidth: 500 }} viewBox="-300 -300 600 600">
         {chordCircles.map((circle, circleIndex) => {
-          const innerRadius = outerRadius - innerRadiusStep * (circleIndex + 1);
-          const outerRadiusForCircle = outerRadius - innerRadiusStep * circleIndex;
+          const innerRadius = outerRadius - (innerRadiusStep * (circleIndex + 1));
+          const outerRadiusForCircle = outerRadius - (innerRadiusStep * circleIndex);
           const circleColor = circleColors[circleIndex % circleColors.length];
 
           return (
@@ -282,9 +219,12 @@ function App() {
                   <g key={`${circleIndex}-${index}`}>
                     <path
                       d={getPathForArc(startAngle, endAngle, innerRadius, outerRadiusForCircle)}
-                      fill={isClicked ? 'white' : circleColor} // Set white if clicked, else original color
+                      fill={isClicked ? "white" : circleColor}
                       stroke="black"
-                      onClick={() => handleChordClick(chord, circleIndex, index)} // Handle click to change color
+                      onClick={() => {
+                        playChord(chord.notes);
+                        setClickedSegment({ circleIndex, chordIndex: index });
+                      }}
                     />
                     {label && (
                       <text
@@ -306,61 +246,11 @@ function App() {
         })}
       </svg>
 
-      {/* Piano Keyboard */}
-      {showPiano && (
-        <div className="my-10 xs:fixed bottom-11">
-          <Piano
-            noteRange={{ first: firstNote, last: lastNote }}
-            playNote={(midiNumber) => {
-              if (!isChordClicked) { // Only play sound if chord is not clicked
-                playNote(midiNumber);
-                setClickedSegment(null); // Unhighlight the chord segments
-              }
-            }}
-            stopNote={() => {}} // No stop note logic needed
-            activeNotes={clickedChordNotes.map((note) => MidiNumbers.fromNote(note))} // Highlight clicked notes// Highlight clicked notes
-            width={320} 
-            keyWidthToHeight={0.33}
-            renderNoteLabel={({ midiNumber }) => 
-              highlightedKeys.includes(midiNumber) && activeChord ? activeChord : '' // Show chord name on highlighted keys
-            }
-            keyboardShortcuts={keyboardShortcuts}
-          />
-        </div>
-      )}
-
-      {/* Bottom Navigation */}
-      <div style={{ bottom: 0 }} className="bg-sky-500 w-full p-2 fixed flex justify-center gap-4 align-bottom">
+      <div style={{position: "fixed", bottom: 0}} className='bg-sky-500 w-full p-2'>
         {label ? (
-          <button
-            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
-            onClick={() => setShowLabel(false)}
-          >
-            Hide labels
-          </button>
+          <button className='bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white' onClick={() => setShowLabel(false)}>Hide labels</button>
         ) : (
-          <button
-            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
-            onClick={() => setShowLabel(true)}
-          >
-            Show labels
-          </button>
-        )}
-
-        {showPiano ? (
-          <button
-            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
-            onClick={() => setShowPiano(false)}
-          >
-            Hide piano
-          </button>
-        ) : (
-          <button
-            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
-            onClick={() => setShowPiano(true)}
-          >
-            Show piano
-          </button>
+          <button className='bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white' onClick={() => setShowLabel(true)}>Show labels</button>
         )}
       </div>
     </div>
