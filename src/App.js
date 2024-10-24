@@ -3,6 +3,8 @@ import Soundfont from 'soundfont-player';
 import './App.css';
 import 'react-piano/dist/styles.css';
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
+import GuitarComponent from './components/Guitar';
+
 
 const circleColors = [
   '#ce2525',  // Red
@@ -152,18 +154,15 @@ const chordCircles = [
 
 // Function to load and play a chord using SoundFont player with adjustable volume
 
-const stopNote = async (midiNumber) => {
-  const note = MidiNumbers.getAttributes(midiNumber).note;
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const piano = await Soundfont.instrument(audioContext, 'acoustic_grand_piano');
-  piano.stop(note, audioContext.currentTime);
-};
+// const stopNote = async (midiNumber) => {
+//   const note = MidiNumbers.getAttributes(midiNumber).note;
+//   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+//   const piano = await Soundfont.instrument(audioContext, 'acoustic_grand_piano');
+//   piano.stop(note, audioContext.currentTime);
+// };
 
 
-const loadPiano = async () => {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  return Soundfont.instrument(audioContext, 'acoustic_grand_piano');
-};
+
 // Function to get SVG path for each pie slice (chord segment)
 const getPathForArc = (startAngle, endAngle, innerRadius, outerRadius) => {
   const x1 = outerRadius * Math.cos(startAngle);
@@ -198,11 +197,17 @@ function App() {
   const [clickedSegment, setClickedSegment] = useState(null); // Track clicked segment
   const [activeChord, setActiveChord] = useState(null); // Track active chord for name display
   const [highlightedKeys, setHighlightedKeys] = useState([]); // Highlight piano keys
+  const [showGuitar, setShowGuitar] = useState(false)
+  const [sound, setSound] = useState('acoustic_grand_piano')
+
+  const loadInstrument = async () => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    return Soundfont.instrument(audioContext, sound);
+  };
 
   useEffect(() => {
-    // Preload piano sound when the component is mounted
-    loadPiano().then(setPiano);
-  }, []);
+    loadInstrument().then(setPiano);
+  }, [sound]); // Reload the instrument when the sound changes
 
   const playChord = (notes) => {
     if (piano) {
@@ -217,12 +222,12 @@ function App() {
     }
   };
 
-  const stopNote = (midiNumber) => {
-    if (piano) {
-      const note = MidiNumbers.getAttributes(midiNumber).note;
-      piano.stop(note, 0);
-    }
-  };
+  // const stopNote = (midiNumber) => {
+  //   if (piano) {
+  //     const note = MidiNumbers.getAttributes(midiNumber).note;
+  //     piano.stop(note, 0);
+  //   }
+  // };
   
   const outerRadius = 250;
   const innerRadiusStep = 30;
@@ -251,7 +256,7 @@ function App() {
 
   return (
     <div className="text-center flex-col flex justify-center items-center">
-      <h1 className="text-center text-black font-bold text-lg">Grammatic Piano</h1>
+      <h1 className="text-center text-black font-bold text-lg">Grammatica</h1>
 
       {/* Circle with Chords */}
       <svg style={{ maxHeight: 400, maxWidth: 500 }} viewBox="-300 -300 600 600">
@@ -306,6 +311,8 @@ function App() {
         })}
       </svg>
 
+
+     
       {/* Piano Keyboard */}
       {showPiano && (
         <div className="my-10 xs:fixed bottom-11">
@@ -329,6 +336,9 @@ function App() {
         </div>
       )}
 
+
+     {showGuitar&& <GuitarComponent/>}
+      
       {/* Bottom Navigation */}
       <div style={{ bottom: 0 }} className="bg-sky-500 w-full p-2 fixed flex justify-center gap-4 align-bottom">
         {label ? (
@@ -336,14 +346,14 @@ function App() {
             className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
             onClick={() => setShowLabel(false)}
           >
-            Hide labels
+            Hide Labels
           </button>
         ) : (
           <button
             className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
             onClick={() => setShowLabel(true)}
           >
-            Show labels
+            Show Labels
           </button>
         )}
 
@@ -352,14 +362,31 @@ function App() {
             className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
             onClick={() => setShowPiano(false)}
           >
-            Hide piano
+            Hide Piano
           </button>
         ) : (
           <button
             className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
-            onClick={() => setShowPiano(true)}
+            onClick={() => {setShowPiano(true) ;setShowGuitar(false);setSound('acoustic_grand_piano')}}
           >
-            Show piano
+            Show Piano
+          </button>
+        )}
+
+
+{showGuitar ? (
+          <button
+            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
+            onClick={() => setShowGuitar(false) }
+          >
+            Hide Guitar
+          </button>
+        ) : (
+          <button
+            className="bg-white p-3 rounded-full text-slate-950 hover:bg-slate-800 hover:text-white"
+            onClick={() => {setShowGuitar(true); setShowPiano(false);setSound('acoustic_guitar_nylon')}}
+          >
+            Show Guitar
           </button>
         )}
       </div>
